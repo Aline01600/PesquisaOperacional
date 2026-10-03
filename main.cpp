@@ -2,132 +2,125 @@
 #include <vector>
 #include <string>
 
-
 using namespace std;
 
-struct Restricao {
+class Restricao {
+    
+    private: 
     vector<double> coeficientes;
     string operador;
     double ladoDireito;
+
+    public: 
+    Restricao(int qtdVariaveis){
+        coeficientes.resize(qtdVariaveis);
+        ladoDireito = 0.0;
+    } 
+
+    void ler(){
+        for(int i =  0; i < coeficientes.size();  i++){
+            cin>> coeficientes[i];
+        }
+        cin >> operador;
+        cin >> ladoDireito;
+    }
+
+    void corrigirLadoDireitoNegativo(){
+
+        if (ladoDireito < 0){
+            for(int i = 0; i < coeficientes.size(); i++){
+                coeficientes[i]*= -1;
+            }
+            ladoDireito *= -1;
+
+            if(operador == "<="){
+                operador = ">=";
+            }
+
+             if(operador == ">="){
+                operador = "<=";
+            }
+        }
+    }
+    //apenas para verificação da funão de leitura.
+    void imprimir() const {
+        for (double coeficiente : coeficientes) {
+            cout << coeficiente << " ";
+        }
+
+        cout << operador << " ";
+        cout << ladoDireito;
+    }
 };
 
-struct ProblemaPL {
-    int qtdVariaveis;
-    int qtdRestricoes;
-    string tipoOtimizacao;
+class ProblemaPL {
+    private:
+        int qtdVariaveis;
+        int qtdRestricoes;
+        string tipoOtimizacao;
 
-    vector<double> coeficientesObjetivo;
-    vector<Restricao> restricoes;
+        vector<double> coeficientesObjetivo;
+        vector<Restricao> restricoes;
+
+        public: 
+            void lerEntrada(){
+                cin >> qtdVariaveis >> qtdRestricoes;
+                cin >> tipoOtimizacao;
+
+                coeficientesObjetivo.resize(qtdVariaveis);
+
+                for (int i = 0; i < qtdVariaveis; i++){
+                    cin >> coeficientesObjetivo[i];
+                }
+
+                restricoes.clear();
+                restricoes.reserve(qtdRestricoes);
+
+                for(int i = 0; i<qtdRestricoes; i++){
+                    Restricao restricao(qtdVariaveis);
+                    restricao.ler();
+                    restricoes.push_back(restricao);
+                }
+                
+            }
+
+            void corrigirLadoDireitoNegativo() {
+                for (int i = 0; i < qtdRestricoes; i++) {
+                    restricoes[i].corrigirLadoDireitoNegativo();
+                }
+            }
+
+            void imprimir() const {
+                cout << "Qtd. variaveis = " << qtdVariaveis << '\n';
+                cout << "Qtd. restricoes = " << qtdRestricoes << '\n';
+                cout << "Tipo de otimizacao = " << tipoOtimizacao << '\n';
+
+                cout << "Objetivo: ";
+
+                for (double coeficiente : coeficientesObjetivo) {
+                    cout << coeficiente << " ";
+                }
+
+                cout << '\n';
+
+                for (int i = 0; i < qtdRestricoes; i++) {
+                    cout << "Restricao " << i + 1 << ": ";
+
+                    restricoes[i].imprimir();
+
+                    cout << '\n';
+                }
+            }
 };
 
-struct FormaPadrao{
-    vector<vector<double>>matriz;
-}
-
-ProblemaPL lerProblema() {
-    ProblemaPL problema;
-
-    cin >> problema.qtdVariaveis >> problema.qtdRestricoes;
-    cin >> problema.tipoOtimizacao;
-
-    problema.coeficientesObjetivo.resize(problema.qtdVariaveis);
-
-    for (int i = 0; i < problema.qtdVariaveis; i++) {
-        cin >> problema.coeficientesObjetivo[i];
-    }
-
-    problema.restricoes.resize(problema.qtdRestricoes);
-
-    for (int i = 0; i < problema.qtdRestricoes; i++) {
-        problema.restricoes[i].coeficientes.resize(problema.qtdVariaveis);
-
-        for (int j = 0; j < problema.qtdVariaveis; j++) {
-            cin >> problema.restricoes[i].coeficientes[j];
-        }
-
-        cin >> problema.restricoes[i].operador;
-        cin >> problema.restricoes[i].ladoDireito;
-    }
-
-    return problema;
-}
-
-void normalizarProblema(ProblemaPL& problema) {
-
-    //Lado direito negativo
-    for (int i = 0; i < problema.qtdRestricoes; i++) {
-
-        if (problema.restricoes[i].ladoDireito < 0) {
-
-            for (int j = 0; j < problema.qtdVariaveis; j++) {
-                problema.restricoes[i].coeficientes[j] *= -1;
-            }
-
-            problema.restricoes[i].ladoDireito *= -1;
-
-            if (problema.restricoes[i].operador == "<=") {
-                problema.restricoes[i].operador = ">=";
-            }
-            else if (problema.restricoes[i].operador == ">=") {
-                problema.restricoes[i].operador = "<=";
-            }
-        }
-    }
-
-}
-
-void formaPadrão(ProblemaPL& problema){
-    //variaveis de folga e variaveis artificiais
-    /*[1 2 3 1 0 0 0
-       1 2 4 0-1 0 0
-       1 4 2 0 0 1 0
-       0 2 4 0 0 0 0 1]*/
-
-   for (int i = 0; i < problema.qtdRestricoes; i++) {                                           
-        if(problema.restricoes[i].operador == "<="){                                            
-            problema.coeficientesObjetivo[i].push_back(porblema.restricoes[i].ladoDireito);                                    
-                                                                                                
-        }
-        if(problema.restricoes[i].operador == ">="){
-            problema.coeficientesObjetivo.push_back(-1.0);
-            problema.coeficientesObjetivo.push_back(1.0);
-        }
-        if(problema.restricoes[i].operador == "=="){
-            problema.coeficientesObjetivo.push_back(1.0);
-        }
-    }
-
-}
-
-void imprimirProblema(const ProblemaPL& problema) {
-    cout << "Qtd. variaveis = " << problema.qtdVariaveis << '\n';
-    cout << "Qtd. restricoes = " << problema.qtdRestricoes << '\n';
-    cout << "Tipo de otimizacao = " << problema.tipoOtimizacao << '\n';
-    cout << "Objetivo: ";
-
-    for (int i = 0; i < problema.qtdVariaveis; i++) {
-        cout << problema.coeficientesObjetivo[i] << " ";
-    }
-
-    cout << '\n';
-
-    for (int i = 0; i < problema.qtdRestricoes; i++) {
-        cout << "Restricao " << i + 1 << ": ";
-
-        for (int j = 0; j < problema.qtdVariaveis; j++) {
-            cout << problema.restricoes[i].coeficientes[j] << " ";
-        }
-
-        cout << problema.restricoes[i].operador << " ";
-        cout << problema.restricoes[i].ladoDireito << '\n';
-    }
-}
 
 int main() {
 
-    ProblemaPL problema = lerProblema();
-    normalizarProblema(problema);
-    imprimirProblema(problema);
+    ProblemaPL problema;
+
+    problema.lerEntrada();
+    problema.corrigirLadoDireitoNegativo();
+    problema.imprimir();
 
     return 0;
 }
